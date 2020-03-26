@@ -1,0 +1,16 @@
+mydate=0
+validuser=False
+archive=False
+nameprefix=""
+movetab=False
+origpage=""
+pagename=""
+pagepage=""
+pagetext=""
+pagesize=0
+destpagename=""
+destpagepage=""
+destpagetext=""
+destpagesize=0
+insert=0
+changed=0

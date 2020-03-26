@@ -1,0 +1,5 @@
+/venv2
+/venv3
+.idea/
+userpassbot.py
+*.pyc
