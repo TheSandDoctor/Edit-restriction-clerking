@@ -58,26 +58,26 @@ def allow_bots(text, user):
                     pnt(user)
                     print("all - false")
                     return False
-    if (tl.name.matches('nobots') and len(tl.params) == 0):
+    if tl.name.matches('nobots') and len(tl.params) == 0:
         print("match - false")
         return False
     return True
 
 
-def StrToDate(datestr):
-    timestamp = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M:%SZ')
+def str_to_date(date_str):
+    timestamp = datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ')
     return timestamp
 
 
-def YoungestDate(datein):
-    datein = StrToDate(datein)
-    if datein > RSconfig.mydate:
-        RSconfig.mydate = datein
+def YoungestDate(date_in):
+    date_in = str_to_date(date_in)
+    if date_in > RSconfig.mydate:
+        RSconfig.mydate = date_in
         RSconfig.validuser = True
     return
 
 
-def GetLastContrib(user):
+def get_last_contrib(user):
     params = {'action': 'query',
               'list': 'usercontribs',
               'uclimit': 1,
@@ -91,7 +91,7 @@ def GetLastContrib(user):
     # print result, len(result)
     if len(result) > 2:
         founddate = date = result['query']['usercontribs'][0]['timestamp']
-        print("Last Normal Edit", StrToDate(founddate))
+        print("Last Normal Edit", str_to_date(founddate))
         YoungestDate(founddate)
     else:
         print("No normal contrib")
@@ -113,23 +113,23 @@ def GetLastDeleted(user):
     # print result, len(result)
     if len(result) > 2:
         founddate = result['query']['alldeletedrevisions'][0]['revisions'][0]['timestamp']
-        print("Last Deleted Edit", StrToDate(founddate))
+        print("Last Deleted Edit", str_to_date(founddate))
         YoungestDate(founddate)
     else:
         print("No deleted contrib")
     return
 
 
-def ExamineUser(user):
+def examine_user(user):
     if len(user) > 0:
-        GetLastContrib(user)
+        get_last_contrib(user)
         GetLastDeleted(user)
     return
 
 
-def FindUsers(text):
+def find_users(text):
     RSconfig.movetab = False
-    RSconfig.mydate = StrToDate("2000-01-01T00:00:00Z")  # new lot of user, set mydate to way back.
+    RSconfig.mydate = str_to_date("2000-01-01T00:00:00Z")  # new lot of user, set mydate to way back.
     RSconfig.validuser = False
     usertext = re.sub(r'![\s]*?[Ss]cope="row"[\s\S]*?\|', "", text)  # remove column 1
     bracket = 0  # now find end of column 2
@@ -157,21 +157,21 @@ def FindUsers(text):
         user = user[colon + 1:]
         pnt("UserA =" + user)
         if "username" not in user.lower():
-            ExamineUser(user)
+            examine_user(user)
     for match in re.finditer(r'\{\{[Uu]\|[\s\S]*?\}\}', textcol2):  # {{U:XXXX}}
         user = "User:" + textcol2[match.start() + 4:match.end() - 2]
         colon = user.index(":")
         user = user[colon + 1:]
         pnt("UserB =" + user)
         if "username" not in user.lower():
-            ExamineUser(user)
+            examine_user(user)
     for match in re.finditer(r'\{\{[Nn]oping\|[\s\S]*?\}\}', textcol2):  # {{noping|XXXX}}
         user = "User:" + textcol2[match.start() + 9:match.end() - 2]
         colon = user.index(":")
         user = user[colon + 1:]
         pnt("UserC =" + user)
         if "username" not in user.lower():
-            ExamineUser(user)
+            examine_user(user)
     if "dynamic" in textcol2.lower():  # Dynamic
         print("DYNAMIC FLAG")
         RSconfig.mydate = datetime.datetime.utcnow()
@@ -190,7 +190,7 @@ def FindUsers(text):
         else:
             datefound = re.findall(r'20\d\d[\s-]\d\d[\s-]\d\d', textlastcol)
             if len(datefound) > 0:
-                expirydate = StrToDate(datefound[0] + "T00:00:00Z")
+                expirydate = str_to_date(datefound[0] + "T00:00:00Z")
         print("Last Group Edit", RSconfig.mydate)
         print("ExpiryDate", expirydate)
         if not RSconfig.archive:
@@ -208,7 +208,7 @@ def FindUsers(text):
     return
 
 
-def MoveToDest(startp, endp, text):
+def move_to_dest(startp, endp, text):
     print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
     print(len(text))
     print(len(RSconfig.pagetext))
@@ -226,7 +226,7 @@ def MoveToDest(startp, endp, text):
     return
 
 
-def CheckTab(start, end, text):
+def check_tab(start, end, text):
     RSconfig.movetab = False
     print(start, end)
     tabline = text[start:end]
@@ -234,16 +234,16 @@ def CheckTab(start, end, text):
     print("++++++++++++++++++++++++++Start of Table Section+++++++++++++++++++++++++++++++++++++++")
     print(repr(tabline))
     print("++++++++++++++++++++++++++End of Table Section+++++++++++++++++++++++++++++++++++++++")
-    FindUsers(tabline)
+    find_users(tabline)
     print("==========================End of Section Data=======================================")
     if RSconfig.movetab:
         print("Eliminate", start, end)
-        MoveToDest(start, end, text)
+        move_to_dest(start, end, text)
         RSconfig.changed = +1
     return
 
 
-def ProcessPage(subpage):
+def process_page(subpage):
     RSconfig.changed = 0
     RSconfig.origpage = subpage
     # set to get the two pages
@@ -308,7 +308,7 @@ def ProcessPage(subpage):
     for a in range(rows - 2, 0, -1):  # MAIN Loop to check each tabline in reverse order
         start = positionlist[a]
         print(start, RSconfig.pagetext[start])  # all are "!"
-        CheckTab(start, end, RSconfig.pagetext)
+        check_tab(start, end, RSconfig.pagetext)
         end = start - 1
         RSconfig.lastrow = False
     if RSconfig.changed > 0:
@@ -355,29 +355,29 @@ def main():
     RSconfig.archive = False
     print("####################################################################")
     print("Process - Wikipedia:Editing restrictions/Placed by the Arbitration Committee")
-    ProcessPage('Placed by the Arbitration Committee')
+    process_page('Placed by the Arbitration Committee')
     print("####################################################################")
     print("Wikipedia:Editing restrictions/Placed by the Wikipedia community")
-    ProcessPage('Placed by the Wikipedia community')
+    process_page('Placed by the Wikipedia community')
     print("####################################################################")
     print("Wikipedia:Editing restrictions/Voluntary")
-    ProcessPage('Voluntary')
+    process_page('Voluntary')
     print("####################################################################")
     print("Wikipedia:Editing restrictions/Unblock conditions")
-    ProcessPage('Unblock conditions')
+    process_page('Unblock conditions')
     RSconfig.archive = True
     print("####################################################################")
     print("Process - Wikipedia:Editing restrictions/Archive/Placed by the Arbitration Committee")
-    ProcessPage('Placed by the Arbitration Committee')
+    process_page('Placed by the Arbitration Committee')
     print("####################################################################")
     print("Wikipedia:Editing restrictions/Archive/Placed by the Wikipedia community")
-    ProcessPage('Placed by the Wikipedia community')
+    process_page('Placed by the Wikipedia community')
     print("####################################################################")
     print("Wikipedia:Editing restrictions/Archive/Voluntary")
-    ProcessPage('Voluntary')
+    process_page('Voluntary')
     print("####################################################################")
     print("Wikipedia:Editing restrictions/Archive/Unblock conditions")
-    ProcessPage('Unblock conditions')
+    process_page('Unblock conditions')
 
 
 if __name__ == "__main__":
