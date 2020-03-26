@@ -22,12 +22,12 @@ def pnt(s):
         print(s.encode('utf-8'))
 
 
-def startAllowed():
+def start_allowed():
     textpage = page.Page(site, "User:TheSandBot/status").getWikiText()
     data = json.loads(textpage)["run"]["restrict_clerking"]
     if str(data) == str(True):
-        return "run"
-    return "no"
+        return True
+    return False
 
 
 def allow_bots(text, user):
@@ -347,8 +347,7 @@ def ProcessPage(subpage):
 
 def main():
     RSconfig.nameprefix = "Wikipedia:Editing restrictions"
-    go = startAllowed()  # Check if task is enabled
-    if go == "no":
+    if not start_allowed():  # Check if task is enabled
         sys.exit('Disabled Task')
     # parameters for API request
     print("main is go")
