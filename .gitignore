@@ -3,3 +3,4 @@
 .idea/
 userpassbot.py
 *.pyc
+.DS_Store
