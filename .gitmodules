@@ -1,0 +1,3 @@
+[submodule "wikitools"]
+	path = wikitools
+	url = https://github.com/TheSandDoctor/wikitools.git
