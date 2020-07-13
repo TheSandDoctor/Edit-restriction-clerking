@@ -3,3 +3,9 @@
 .idea/
 userpassbot.py
 *.pyc
+.DS_Store
+apicache-py3/
+pywikibot.lwp
+throttle.ctrl
+user-config.py
+user-password.py
