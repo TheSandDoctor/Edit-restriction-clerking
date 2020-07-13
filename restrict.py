@@ -1,4 +1,4 @@
-from wikitools import *
+import pywikibot
 import time
 import urllib
 import json
@@ -9,9 +9,11 @@ import mwparserfromhell
 import datetime
 import sys
 import RSconfig
+import requests
 
-site = wiki.Wiki()  # Tell Python to use the English Wikipedia's API
-site.login(userpassbot.username, userpassbot.password)  # login
+site = pywikibot.Site()  # Tell Python to use the English Wikipedia's API
+
+#site.login(userpassbot.username, userpassbot.password)  # login
 
 
 # routine to autoswitch some of the output - as filenames have accented chars!
@@ -23,7 +25,7 @@ def pnt(s):
 
 
 def start_allowed():
-    textpage = page.Page(site, "User:TheSandBot/status").getWikiText()
+    textpage = pywikibot.Page(site, "User:TheSandBot/status").text
     data = json.loads(textpage)["run"]["restrict_clerking"]
     if str(data) == str(True):
         return True
@@ -78,17 +80,47 @@ def YoungestDate(date_in):
 
 
 def get_last_contrib(user):
+    S = requests.Session()
+    # Retrieve login token first
+    PARAMS_0 = {
+        'action': "query",
+        'meta': "tokens",
+        'type': "login",
+        'format': "json"
+    }
+
+    R = S.get(url="https://en.wikipedia.org/w/api.php", params=PARAMS_0)
+    DATA = R.json()
+    LOGIN_TOKEN = DATA['query']['tokens']['logintoken']
+
+    # print(LOGIN_TOKEN)
+
+    # Send a post request to login. Using the main account for login is not
+    # supported. Obtain credentials via Special:BotPasswords
+    # (https://www.mediawiki.org/wiki/Special:BotPasswords) for lgname & lgpassword
+
+    PARAMS_1 = {
+        'action': "login",
+        'lgname': userpassbot.username,
+        'lgpassword': userpassbot.password,
+        'lgtoken': LOGIN_TOKEN,
+        'format': "json"
+    }
+
+    R = S.post("https://en.wikipedia.org/w/api.php", data=PARAMS_1)
+    DATA = R.json()
+
+   # print(DATA)
+
     params = {'action': 'query',
               'list': 'usercontribs',
               'uclimit': 1,
               'ucuser': user,
-              'ucdir': "older"
+              'ucdir': "older",
+              'format': 'json'
               }
-    # print "GLC.params"
-    request = api.APIRequest(site, params)  # Set the API request
-    # print "GLC.request"
-    result = request.query(False)
-    # print result, len(result)
+    R = S.get("https://en.wikipedia.org/w/api.php", params=params)
+    result = R.json()
     if len(result) > 2:
         founddate = date = result['query']['usercontribs'][0]['timestamp']
         print("Last Normal Edit", str_to_date(founddate))
@@ -99,17 +131,58 @@ def get_last_contrib(user):
 
 
 def GetLastDeleted(user):
+    S = requests.Session()
+    # Retrieve login token first
+    PARAMS_0 = {
+        'action': "query",
+        'meta': "tokens",
+        'type': "login",
+        'format': "json"
+    }
+
+    R = S.get(url="https://en.wikipedia.org/w/api.php", params=PARAMS_0)
+    DATA = R.json()
+    LOGIN_TOKEN = DATA['query']['tokens']['logintoken']
+
+    # print(LOGIN_TOKEN)
+
+    # Send a post request to login. Using the main account for login is not
+    # supported. Obtain credentials via Special:BotPasswords
+    # (https://www.mediawiki.org/wiki/Special:BotPasswords) for lgname & lgpassword
+
+    PARAMS_1 = {
+        'action': "login",
+        'lgname': userpassbot.username,
+        'lgpassword': userpassbot.password,
+        'lgtoken': LOGIN_TOKEN,
+        'format': "json"
+    }
+
+    R = S.post("https://en.wikipedia.org/w/api.php", data=PARAMS_1)
+    DATA = R.json()
+
+    # Step 3: When logged in, retrieve a CSRF token
+    PARAMS_2 = {
+        'action': "query",
+        'meta': "tokens",
+        'format': "json"
+    }
+
+    R = S.get(url="https://en.wikipedia.org/w/api.php", params=PARAMS_2)
+    DATA = R.json()
+
+    CSRF_TOKEN = DATA['query']['tokens']['csrftoken']
     params = {'action': 'query',
               'list': 'alldeletedrevisions',
               'adrprop': 'timestamp',
               'adrlimit': 1,
-              'adruser': user,
-              'adrdir': "older"
+              'adruser': "TheSandDoctor",
+              'adrdir': "older",
+              'format': 'json',
+              'token': CSRF_TOKEN,
               }
-    # print "GLD.params"
-    request = api.APIRequest(site, params)  # Set the API request
-    # print "GLD.request"
-    result = request.query(False)
+    R = S.get("https://en.wikipedia.org/w/api.php", params=params)
+    result = R.json()
     # print result, len(result)
     if len(result) > 2:
         founddate = result['query']['alldeletedrevisions'][0]['revisions'][0]['timestamp']
@@ -263,12 +336,12 @@ def process_page(subpage):
                       "Archive from [[" + RSconfig.pagename + "]]"
     print(RSconfig.pagename)
     print(RSconfig.destpagename)
-    RSconfig.pagepage = page.Page(site, RSconfig.pagename)
+    RSconfig.pagepage = pywikibot.Page(site, RSconfig.pagename)
     print(RSconfig.pagepage.title)
-    RSconfig.pagetext = RSconfig.pagepage.getWikiText()
+    RSconfig.pagetext = RSconfig.pagepage.text
     RSconfig.pagesize = len(RSconfig.pagetext)
-    RSconfig.destpagepage = page.Page(site, RSconfig.destpagename)
-    RSconfig.destpagetext = RSconfig.destpagepage.getWikiText()
+    RSconfig.destpagepage = pywikibot.Page(site, RSconfig.destpagename)
+    RSconfig.destpagetext = RSconfig.destpagepage.text
     RSconfig.destpagesize = len(RSconfig.destpagetext)
     print("Page Sizes from and to", RSconfig.pagesize, RSconfig.destpagesize)
     # Check pages for nobots - unlikly to be here
@@ -322,22 +395,22 @@ def process_page(subpage):
         print(RSconfig.destpagetext)
         print("TIME TO CHECK FROM PAGE")
         # Get current page sizes - has someone edited while processing? - check with saved size on first load
-        pagepage = page.Page(site, RSconfig.pagename)
-        pagetext = pagepage.getWikiText()
+        pagepage = pywikibot.Page(site, RSconfig.pagename)
+        pagetext = pagepage.text
         pagesize = len(pagetext)
         if pagesize != RSconfig.pagesize:
             print("Page Has been edited - aborting")
             return
         print("TIME TO CHECK DEST PAGE")
-        destpagepage = page.Page(site, RSconfig.destpagename)
-        destpagetext = destpagepage.getWikiText()
+        destpagepage = pywikibot.Page(site, RSconfig.destpagename)
+        destpagetext = destpagepage.text
         destpagesize = len(destpagetext)
         if destpagesize != RSconfig.destpagesize:
             print("Page Has been edited abort")
             return
-        RSconfig.pagepage.edit(text=RSconfig.pagetext, bot=True,
+        RSconfig.pagepage.save(botflag=True,
                                summary=editsum)  # (DO NOT UNCOMMENT UNTIL BOT IS APPROVED)
-        RSconfig.destpagepage.edit(text=RSconfig.destpagetext, bot=True,
+        RSconfig.destpagepage.save(botflag=True,
                                    summary=editsumdest)  # (DO NOT UNCOMMENT UNTIL BOT IS APPROVED)
         print("====================")
     else:
