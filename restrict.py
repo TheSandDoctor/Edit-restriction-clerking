@@ -14,7 +14,7 @@ site = wiki.Wiki()  # Tell Python to use the English Wikipedia's API
 site.login(userpassbot.username, userpassbot.password)  # login
 
 # namespace 3 is the user talk namespace
-namespaces = "0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|90|91|92|93|100|101|102|103|104|105|106|107|486|487|828|829|1198|1199|2600|5500|5501"
+namespaces = "0|1|2|4|5|6|7|8|9|10|11|12|13|14|15|90|91|92|93|100|101|102|103|104|105|106|107|486|487|828|829|1198|1199|2600|5500|5501"
 
 # routine to autoswitch some of the output - as filenames have accented chars!
 def pnt(s):
