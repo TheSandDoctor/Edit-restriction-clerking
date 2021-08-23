@@ -116,9 +116,12 @@ def GetLastDeleted(user):
     result = request.query(False)
     # print result, len(result)
     if len(result) > 2:
-        founddate = result['query']['alldeletedrevisions'][0]['revisions'][0]['timestamp']
-        print("Last Deleted Edit", str_to_date(founddate))
-        YoungestDate(founddate)
+        try:
+            founddate = result['query']['alldeletedrevisions'][0]['revisions'][0]['timestamp']
+            print("Last Deleted Edit", str_to_date(founddate))
+            YoungestDate(founddate)
+        except IndexError:
+            pass # bad page title, move on. This was discovered Aug 22 2021 with Doc James
     else:
         print("No deleted contrib")
     return
