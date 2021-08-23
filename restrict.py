@@ -93,9 +93,12 @@ def get_last_contrib(user):
     result = request.query(False)
     # print result, len(result)
     if len(result) > 2:
-        founddate = date = result['query']['usercontribs'][0]['timestamp']
-        print("Last Normal Edit", str_to_date(founddate))
-        YoungestDate(founddate)
+        try:
+            founddate = date = result['query']['usercontribs'][0]['timestamp']
+            print("Last Normal Edit", str_to_date(founddate))
+            YoungestDate(founddate)
+        except IndexError:
+            pass #bad title
     else:
         print("No normal contrib")
     return
