@@ -1,6 +1,6 @@
 from wikitools import *
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import json
 import userpassbot  # Bot password
 import warnings
@@ -21,7 +21,7 @@ def pnt(s):
     try:
         print(s)
     except UnicodeEncodeError:
-        print(s.encode('utf-8'))
+        print((s.encode('utf-8')))
 
 
 def start_allowed():
@@ -95,7 +95,7 @@ def get_last_contrib(user):
     if len(result) > 2:
         try:
             founddate = date = result['query']['usercontribs'][0]['timestamp']
-            print("Last Normal Edit", str_to_date(founddate))
+            print(("Last Normal Edit", str_to_date(founddate)))
             YoungestDate(founddate)
         except IndexError:
             pass #bad title
@@ -121,7 +121,7 @@ def GetLastDeleted(user):
     if len(result) > 2:
         try:
             founddate = result['query']['alldeletedrevisions'][0]['revisions'][0]['timestamp']
-            print("Last Deleted Edit", str_to_date(founddate))
+            print(("Last Deleted Edit", str_to_date(founddate)))
             YoungestDate(founddate)
         except IndexError:
             pass # bad page title, move on. This was discovered Aug 22 2021 with Doc James
@@ -188,7 +188,7 @@ def find_users(text):
     if RSconfig.validuser:
         mylist = []
         textlen = len(usertext) - 1
-        print("textlen", textlen)
+        print(("textlen", textlen))
         for x in range(textlen, 0, -1):
             if usertext[x] == "|":
                 mylist.append(x)
@@ -201,8 +201,8 @@ def find_users(text):
             datefound = re.findall(r'20\d\d[\s-]\d\d[\s-]\d\d', textlastcol)
             if len(datefound) > 0:
                 expirydate = str_to_date(datefound[0] + "T00:00:00Z")
-        print("Last Group Edit", RSconfig.mydate)
-        print("ExpiryDate", expirydate)
+        print(("Last Group Edit", RSconfig.mydate))
+        print(("ExpiryDate", expirydate))
         if not RSconfig.archive:
             if RSconfig.mydate < datetime.datetime.utcnow() - datetime.timedelta(days=730):
                 print("THIS ROW TO BE ARCHIVED - EDITS TWO YEARS OLD")
@@ -220,15 +220,15 @@ def find_users(text):
 
 def move_to_dest(startp, endp, text):
     print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
-    print(len(text))
-    print(len(RSconfig.pagetext))
+    print((len(text)))
+    print((len(RSconfig.pagetext)))
     # tabline1=text[startp:endp]
     tabline = RSconfig.pagetext[startp:endp]
     print(tabline)
     print("****************")
     pagetext = RSconfig.pagetext[0:startp - 1] + "\n\n" + RSconfig.pagetext[endp + 1:]
     RSconfig.pagetext = pagetext
-    print(repr(tabline))
+    print((repr(tabline)))
     print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
     pagetext = RSconfig.destpagetext[0:RSconfig.insert] + "\n\n" + tabline + "\n\n" + RSconfig.destpagetext[
                                                                                       RSconfig.insert + 1:]
@@ -238,16 +238,16 @@ def move_to_dest(startp, endp, text):
 
 def check_tab(start, end, text):
     RSconfig.movetab = False
-    print(start, end)
+    print((start, end))
     tabline = text[start:end]
-    print(repr(tabline))
+    print((repr(tabline)))
     print("++++++++++++++++++++++++++Start of Table Section+++++++++++++++++++++++++++++++++++++++")
-    print(repr(tabline))
+    print((repr(tabline)))
     print("++++++++++++++++++++++++++End of Table Section+++++++++++++++++++++++++++++++++++++++")
     find_users(tabline)
     print("==========================End of Section Data=======================================")
     if RSconfig.movetab:
-        print("Eliminate", start, end)
+        print(("Eliminate", start, end))
         move_to_dest(start, end, text)
         RSconfig.changed = +1
     return
@@ -271,16 +271,16 @@ def process_page(subpage):
                   "([[" + RSconfig.destpagename + "]])"
         editsumdest = "([[Wikipedia:Bots/Requests for approval/TheSandBot 9|Task 9]]) Inactive Users - Add to " \
                       "Archive from [[" + RSconfig.pagename + "]]"
-    print(RSconfig.pagename)
-    print(RSconfig.destpagename)
+    print((RSconfig.pagename))
+    print((RSconfig.destpagename))
     RSconfig.pagepage = page.Page(site, RSconfig.pagename)
-    print(RSconfig.pagepage.title)
+    print((RSconfig.pagepage.title))
     RSconfig.pagetext = RSconfig.pagepage.getWikiText()
     RSconfig.pagesize = len(RSconfig.pagetext)
     RSconfig.destpagepage = page.Page(site, RSconfig.destpagename)
     RSconfig.destpagetext = RSconfig.destpagepage.getWikiText()
     RSconfig.destpagesize = len(RSconfig.destpagetext)
-    print("Page Sizes from and to", RSconfig.pagesize, RSconfig.destpagesize)
+    print(("Page Sizes from and to", RSconfig.pagesize, RSconfig.destpagesize))
     # Check pages for nobots - unlikly to be here
     stop = allow_bots(RSconfig.pagetext, "TheSandBot")
     if not stop:
@@ -317,7 +317,7 @@ def process_page(subpage):
     print(end)
     for a in range(rows - 2, 0, -1):  # MAIN Loop to check each tabline in reverse order
         start = positionlist[a]
-        print(start, RSconfig.pagetext[start])  # all are "!"
+        print((start, RSconfig.pagetext[start]))  # all are "!"
         check_tab(start, end, RSconfig.pagetext)
         end = start - 1
         RSconfig.lastrow = False
@@ -326,10 +326,10 @@ def process_page(subpage):
         print("====================")
         RSconfig.pagetext = re.sub(r'\|-\n*?! scope="row"\nBOTEND\|\}', '|}', RSconfig.pagetext)
         RSconfig.pagetext = re.sub(r'\|-\n*?\!', '|-\n!', RSconfig.pagetext)
-        print(RSconfig.pagetext)
+        print((RSconfig.pagetext))
         RSconfig.destpagetext = re.sub(r'\|-\n*?! scope="row"\nBOTEND\|\}', '|}', RSconfig.destpagetext)
         RSconfig.destpagetext = re.sub(r'\|-\n*?\!', '|-\n!', RSconfig.destpagetext)
-        print(RSconfig.destpagetext)
+        print((RSconfig.destpagetext))
         print("TIME TO CHECK FROM PAGE")
         # Get current page sizes - has someone edited while processing? - check with saved size on first load
         pagepage = page.Page(site, RSconfig.pagename)
